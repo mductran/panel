@@ -8,7 +8,23 @@ from urllib.request import urlopen
 import numpy as np
 
 search_app = Flask(__name__)
+
+# TODO: use environment variable
+DBUSER = 'panels_user'
+DBPASS = 'f'
+DBHOST = 'db'
+DBPORT = '5432'
+DBNAME = 'panels'
 SECRET_KEY = os.urandom(32)
+
+search_app.config['SQLALCHEMY_DATABASE_URI'] = \
+    'postgresql+psycopg2://{user}:{passwd}@{host}:{port}/{db}'.format(
+        user=DBUSER,
+        passwd=DBPASS,
+        host=DBHOST,
+        port=DBPORT,
+        db=DBNAME)
+search_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 search_app.config["SECRET_KEY"] = SECRET_KEY
 
 

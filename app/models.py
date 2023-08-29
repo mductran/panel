@@ -1,8 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
-
-from .app import search_app
-
-db = SQLAlchemy(search_app)
+from app import db
 
 
 class Source(db.Model):

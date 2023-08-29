@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request
-from .form import SearchForm
+from flask_sqlalchemy import SQLAlchemy
+from app.form import SearchForm
 
 import os
 import base64
-import cv2
 from urllib.request import urlopen
 import numpy as np
 
@@ -11,7 +11,7 @@ search_app = Flask(__name__)
 
 # TODO: use environment variable
 DBUSER = 'panels_user'
-DBPASS = 'f'
+DBPASS = ''
 DBHOST = 'db'
 DBPORT = '5432'
 DBNAME = 'panels'
@@ -26,6 +26,8 @@ search_app.config['SQLALCHEMY_DATABASE_URI'] = \
         db=DBNAME)
 search_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 search_app.config["SECRET_KEY"] = SECRET_KEY
+
+db = SQLAlchemy(search_app)
 
 
 @search_app.route("/", methods=["GET", "POST"])

@@ -10,6 +10,98 @@ from scipy import ndimage as ndi
 import urllib.request
 
 
+def ccl(image):
+    if len(image.shape) > 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(image, (5, 5), 0)
+
+    _, thresh = cv2.threshold(blur, 235, 255, cv2.THRESH_BINARY)
+
+    cv2.rectangle(thresh, (0, 0), tuple(image.shape[::-1]), (0, 255, 0), 10)
+
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(image=thresh, connectivity=4,
+                                                                            ltype=cv2.CV_32S)
+
+    # TODO: perform grouping on connected components
+    # if more than half of a component’s convex hull overlaps with another component’s
+    # the two components are considered to belong to the same panel, and therefore are merged together.
+
+    ind = np.argsort(stats[:, 4], )[::-1][1]
+    panel_block_mask = ((labels == ind) * 255).astype("uint8")
+
+    cv2.rectangle(panel_block_mask, (0, 0), tuple(panel_block_mask.shape[::-1]), (255, 255, 255), 10)
+    return panel_block_mask
+
+
+def is_open_panels(image):
+    # check if image is binarized
+    if len(image.shape) > 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(image, 235, 255, cv2.THRESH_BINARY)
+    height, width = thresh.shape[0], thresh.shape[1]
+
+    # check horizontal border
+    i = 0
+    phi_prime_top, phi_prime_bot = 0, 0
+    max_x_top, min_x_top, max_x_bot, min_x_bot = 0, 0, 0, 0
+    while i < width - 1:
+        max_x_top = max(thresh[0][i] * i / 255, max_x_top)
+        min_x_top = min(thresh[0][i] * i / 255, min_x_top)
+        phi_prime_top += (image[0][i + 1] - image[0][i]) / 255
+
+        max_x_bot = max(thresh[height - 1][i] * i / 255, max_x_bot)
+        min_x_bot = min(thresh[height - 1][i] * i / 255, min_x_bot)
+        phi_prime_bot += (image[height - 1][i + 1] - image[0][i]) / 255
+        i += 1
+
+    # TODO: close open boundaries
+    if phi_prime_top > 10 and (max_x_top - min_x_top) > 0.7 * width:
+        print("top border is open")
+    else:
+        print("top border is closed")
+
+    if phi_prime_bot > 10 and (max_x_bot - min_x_bot) > 0.7 * width:
+        print("bottom border is open")
+    else:
+        print("bottom border is closed")
+
+    # check vertical borders
+    i = 0
+    phi_prime_left, phi_prime_right = 0, 0
+    max_y_left, min_y_left, max_y_right, min_y_right = 0, 0, 0, 0
+    while i < height - 1:
+        max_y_left = max(thresh[i][0] * i / 255, max_y_left)
+        min_y_left = min(thresh[i][0] * i / 255, min_y_left)
+        phi_prime_left += (image[i + 1][0] - image[i][0]) / 255
+
+        max_y_right = max(thresh[i][width - 1] * i / 255, max_y_right)
+        min_y_right = min(thresh[i][width - 1] * i / 255, min_y_right)
+        phi_prime_right += (image[i + 1][width - 1] - image[i][width - 1]) / 255
+        i += 1
+
+    if phi_prime_left > 10 and (max_y_left - min_y_left) > 0.7 * width:
+        print("left border is open")
+    else:
+        print("left border is closed")
+
+    if phi_prime_right > 10 and (max_y_right - min_y_right) > 0.7 * width:
+        print("right border is open")
+    else:
+        print("right border is closed")
+
+
+def panel_block_generation():
+    return
+
+
+def panel_block_splitting():
+    return
+
+
+def panel_shape_extraction():
+    return
+
+
 def extract_panels(link="", path=""):
     if link != "":
         request = urllib.request.urlopen(link)
